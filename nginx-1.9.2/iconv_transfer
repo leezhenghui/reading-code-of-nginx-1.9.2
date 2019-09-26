@@ -60,7 +60,6 @@ exit
 
 
 
-
 # check period (second)
 CHECK_PERIOD=10
 

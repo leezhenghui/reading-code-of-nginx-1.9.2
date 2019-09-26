@@ -77,6 +77,7 @@ ngx_uint_t            ngx_use_accept_mutex; //ƒ«√¥ª·∞—ngx_use_accept_mutex÷√Œ™1£
 ngx_uint_t            ngx_accept_events; //÷ª”–eventportª·”√µΩ∏√±‰¡ø
 /* ngx_accept_mutex_held «µ±«∞Ω¯≥Ãµƒ“ª∏ˆ»´æ÷±‰¡ø£¨»Áπ˚Œ™l£¨‘Ú±Ì æ’‚∏ˆΩ¯≥Ã“—æ≠ªÒ»°µΩ¡Àngx_accept_mutexÀ¯£ª»Áπ˚Œ™0£¨‘Ú±Ì æ√ª”–ªÒ»°µΩÀ¯ */
 //º˚ngx_process_events_and_timersª·÷√Œª∏√Œª  »Áπ˚flag÷√Œ™∏√Œª£¨‘Úngx_epoll_process_eventsª·—”∫Û¥¶¿Ìepoll ¬º˛ngx_post_event
+//”–¡À∏√±Íº«£¨±Ì æ∏√Ω¯≥Ã“—æ≠∞—accept ¬º˛ÃÌº”µΩepoll ¬º˛ºØ÷–¡À£¨≤ª”√÷ÿ∏¥÷¥––∫Û√Êµƒngx_enable_accept_events£¨∏√∫Ø ˝ «”–œµÕ≥µ˜”√π˝≥Ã£¨”∞œÏ–‘ƒ‹
 ngx_uint_t            ngx_accept_mutex_held; //1±Ì æµ±«∞ªÒ»°¡Àngx_accept_mutexÀ¯   0±Ì æµ±«∞≤¢√ª”–ªÒ»°µΩngx_accept_mutexÀ¯   
 //ƒ¨»œ0.5s£¨ø…“‘”…accept_mutex_delayΩ¯––≈‰÷√
 ngx_msec_t            ngx_accept_mutex_delay; //»Áπ˚√ªªÒ»°µΩmutexÀ¯£¨‘Ú—”≥Ÿ’‚√¥∂‡∫¡√Î÷ÿ–¬ªÒ»°°£accept_mutex_delay≈‰÷√£¨µ•Œª500ms
@@ -855,7 +856,7 @@ ngx_timer_signal_handler(int signo)
 }
 
 #endif
-//‘⁄¥¥Ω®◊”Ω¯≥Ãµƒ¿Ô√Ê÷¥––  ngx_worker_process_init
+//‘⁄¥¥Ω®◊”Ω¯≥Ãµƒ¿Ô√Ê÷¥––  ngx_worker_process_init£¨
 static ngx_int_t
 ngx_event_process_init(ngx_cycle_t *cycle)
 {
@@ -1044,14 +1045,17 @@ ngx_event_process_init(ngx_cycle_t *cycle)
      Œ™ngx_event_accept£¨“≤æÕ «Àµ£¨”––¬¡¨Ω” ¬º˛ ±Ω´µ˜”√ngx_event_accept∑Ω∑®Ω®¡¢–¬¡¨Ω”£®£©°£
      */
     ls = cycle->listening.elts;
-    for (i = 0; i < cycle->listening.nelts; i++) {
+    for (i = 0; i < cycle->listening.nelts; i++) { 
 
 #if (NGX_HAVE_REUSEPORT)
+        //masterΩ¯≥Ã÷¥––ngx_clone_listening÷–»Áπ˚≈‰÷√¡À∂‡worker£¨º‡Ã˝80∂Àø⁄ª·”–worker∏ˆlisten∏≥÷µ£¨masterΩ¯≥Ã‘⁄ngx_open_listening_sockets
+        //÷–ª·º‡Ã˝80∂Àø⁄worker¥Œ£¨ƒ«√¥◊”Ω¯≥Ã¥¥Ω®∆¿¥∫Û£¨≤ª «√ø∏ˆ◊÷Ω¯≥Ã∂ºπÿ◊¢’‚worker∂‡∏ˆ listen ¬º˛¡À¬?Œ™¡À±‹√‚’‚∏ˆŒ Ã‚£¨nginxÕ®π˝
+        //‘⁄◊”Ω¯≥Ã‘À––ngx_event_process_init∫Ø ˝µƒ ±∫Ú£¨Õ®π˝ngx_add_event¿¥øÿ÷∆◊”Ω¯≥Ãπÿ◊¢µƒlisten£¨◊Ó÷’ µœ÷÷ªπÿ◊¢masterΩ¯≥Ã÷–¥¥Ω®µƒ“ª∏ˆlisten ¬º˛
         if (ls[i].reuseport && ls[i].worker != ngx_worker) {
             continue;
         }
 #endif
-
+        
         c = ngx_get_connection(ls[i].fd, cycle->log); //¥”¡¨Ω”≥ÿ÷–ªÒ»°“ª∏ˆngx_connection_t
 
         if (c == NULL) {
